@@ -1,10 +1,8 @@
-![Simplicit&eacute; Software](https://www.simplicite.io/resources/logos/logo250.png)
+![Simplicit&eacute; Software](https://platform.simplicite.io/logos/logo250.png)
 ***
 
-Apache Ant task for JLessC
-==========================
-
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jlessc-ant&metric=alert_status)](https://sonarcloud.io/dashboard?id=jlessc-ant)
+Java Language Server
+====================
 
 Build
 -----
@@ -15,11 +13,7 @@ Build
 Test
 ----
 
-	mvn dependency:copy-dependencies
-	cd src/test/resources
-	ant -Djlessc.lib.version=x.y -Djlessc.task.version=x.y.z test
-
-where the above `x.y[.z]` version numbers correspond to the version numbers of the JLessC lib and of the Ant task (see the `pom.xml`).
+**TODO**
 
 Publish
 -------
