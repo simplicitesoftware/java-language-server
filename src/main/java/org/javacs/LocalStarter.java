@@ -7,7 +7,6 @@ import org.javacs.lsp.LSP;
 /**
  * This class is an executable reproduction of the "Main.java" for this Language-Server project<br>
  * It vows to be launched in a Thread instead of using the JLS as a whole process
- * @work-in-progress
  */
 public class LocalStarter
 {
