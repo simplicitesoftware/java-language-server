@@ -4,7 +4,7 @@
 Java Language Server
 ====================
 
-This is a fork & customisation for Simplicit&eacute; of [Java Language Servers](https://github.com/georgewfraser/java-language-server)
+This is a fork & customisation for Simplicit&eacute; low code platform of George Fraser's [Java Language Servers](https://github.com/georgewfraser/java-language-server).
 
 Usage
 -----
@@ -16,7 +16,7 @@ License
 
 The MIT License (MIT)
 
-Copyright (c) 2016 George Fraser forked by Simplicit&eacute; Software
+Copyright (c) 2016 George Fraser (forked by Simplicit&eacute; Software)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

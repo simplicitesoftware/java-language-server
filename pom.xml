@@ -7,7 +7,7 @@
 
   <groupId>com.simplicite</groupId>
   <artifactId>lsp</artifactId>
-  <version>1.0</version>
+  <version>1.0.0</version>
   <name>Simplicite Java LSP</name>
   <description>Simplicite Java Language Server - EXPERIMENTAL - forked from georgewfraser/java-language-server</description>
   <url>https://www.simplicite.io</url>
