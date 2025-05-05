@@ -5,12 +5,36 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.simplicite</groupId>
-  <artifactId>lsp</artifactId>
+  <groupId>io.github.simplicitesoftware</groupId>
+  <artifactId>java-language-server</artifactId>
   <version>1.0.0</version>
   <name>Simplicite Java LSP</name>
   <description>Simplicite Java Language Server - EXPERIMENTAL - forked from georgewfraser/java-language-server</description>
-  <url>https://www.simplicite.io</url>
+  <url>https://github.com/simplicitesoftware/java-language-server/blob/main/README.md</url>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+    </license>
+  </licenses>
+  <scm>
+    <url>https://github.com/simplicitesoftware/java-language-server</url>
+    <connection>scm:git:git://github.com/simplicitesoftware/java-language-server.git</connection>
+    <developerConnection>scm:git:ssh://github.com:simplicitesoftware/java-language-server.git</developerConnection>
+  </scm>
+  <organization>
+    <name>Simplicite Software</name>
+    <url>https://www.simplicitesoftware.com</url>
+  </organization>
+  <developers>
+    <developer>
+      <name>Simplicite Software</name>
+      <email>contact@simplicitesoftware.com</email>
+      <organization>Simplicite Software</organization>
+      <organizationUrl>https://www.simplicitesoftware.com</organizationUrl>
+    </developer>
+  </developers>
 
   <packaging>jar</packaging>
 
@@ -21,9 +45,9 @@
   </properties>
 
   <build>
-    <finalName>simplicite-lsp-${project.version}</finalName>
+    <!--finalName>simplicite-lsp-${project.version}</finalName -->
     <plugins>
-      <!-- Build a plain JAR and copy dependencies in target/lib -->
+      <!-- Build a plain JAR and copy dependencies in target/lib
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -43,8 +67,8 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <!-- Build a bundle JAR -->
+      </plugin -->
+      <!-- Build a bundle JAR
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
@@ -59,7 +83,7 @@
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
         </configuration>
-      </plugin>
+      </plugin -->
       <!-- Specifying Compiler Arguments for full-local project (no server) -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -76,6 +100,79 @@
                 <arg>--add-exports</arg><arg>jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
                 <arg>--add-opens</arg><arg>jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
             </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.10.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <additionalOptions>
+            <option>--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</option>
+            <option>--add-exports jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</option>
+            <option>--add-exports jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</option>
+            <option>--add-exports jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</option>
+            <option>--add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</option>
+            <option>--add-exports jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</option>
+            <option>--add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</option>
+            <option>--add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</option>
+          </additionalOptions>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+      </plugin>
+	    <plugin>
+        <groupId>net.nicoulaj.maven.plugins</groupId>
+        <artifactId>checksum-maven-plugin</artifactId>
+        <version>1.11</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>artifacts</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>3.2.5</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.5.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
         </configuration>
       </plugin>
     </plugins>
