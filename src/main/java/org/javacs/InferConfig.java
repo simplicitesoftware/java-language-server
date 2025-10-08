@@ -39,11 +39,11 @@ class InferConfig
     }
 
     private static Path defaultMavenHome() {
-        return Paths.get(System.getProperty("user.home")).resolve(".m2");
+        return Paths.get(System.getProperty("lsp.home", System.getProperty("user.home"))).resolve(".m2");
     }
 
     private static Path defaultGradleHome() {
-        return Paths.get(System.getProperty("user.home")).resolve(".gradle");
+        return Paths.get(System.getProperty("lsp.home", System.getProperty("user.home"))).resolve(".gradle");
     }
 
     /** Find .jar files for external dependencies, for examples maven dependencies in ~/.m2 or jars in bazel-genfiles */
