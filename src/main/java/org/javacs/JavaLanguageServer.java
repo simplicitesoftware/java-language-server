@@ -3,30 +3,21 @@ package org.javacs;
 import static org.javacs.JsonHelper.GSON;
 
 import com.google.gson.*;
-import com.sun.source.util.Trees;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.logging.Logger;
-import javax.lang.model.element.*;
 import org.javacs.action.CodeActionProvider;
 import org.javacs.completion.CompletionProvider;
 import org.javacs.completion.SignatureProvider;
-import org.javacs.fold.FoldProvider;
 import org.javacs.hover.HoverProvider;
-import org.javacs.index.SymbolProvider;
-import org.javacs.lens.CodeLensProvider;
 import org.javacs.lsp.*;
-import org.javacs.markup.ColorProvider;
 import org.javacs.markup.ErrorProvider;
-import org.javacs.navigation.DefinitionProvider;
-import org.javacs.navigation.ReferenceProvider;
-import org.javacs.rewrite.*;
 
 public class JavaLanguageServer extends LanguageServer {
-    // TODO allow multiple workspace roots
+    // TODO (?) allow multiple workspace roots
     private Path workspaceRoot;
     private final LanguageClient client;
     private JavaCompilerService cacheCompiler;
@@ -163,9 +154,7 @@ public class JavaLanguageServer extends LanguageServer {
         this.workspaceRoot = Paths.get(params.rootUri);
         FileStore.setWorkspaceRoots(Set.of(Paths.get(params.rootUri)));
 
-        // HERE WOULD ENABLE ONLY WHAT WE WANT
-        // BEGIN -> completion + diagnostic + signature
-        // optimize those for Simplicité & then let's go with it.
+        // TODO: refine to only Simplicité's usages
         var c = new JsonObject();
         c.addProperty("textDocumentSync", 2); // Incremental
         c.addProperty("hoverProvider", true);
@@ -181,15 +170,15 @@ public class JavaLanguageServer extends LanguageServer {
         signatureTrigger.add(",");
         signatureHelpOptions.add("triggerCharacters", signatureTrigger);
         c.add("signatureHelpProvider", signatureHelpOptions);
-        c.addProperty("referencesProvider", true);
-        c.addProperty("definitionProvider", true);
-        c.addProperty("workspaceSymbolProvider", true);
-        c.addProperty("documentSymbolProvider", true);
-        c.addProperty("documentFormattingProvider", true);
-        var codeLensOptions = new JsonObject();
-        c.add("codeLensProvider", codeLensOptions);
+        // c.addProperty("referencesProvider", true);         // REMOVE OR 'FALSE' FOR TRACK ?
+        // c.addProperty("definitionProvider", true);         // ?
+        // c.addProperty("workspaceSymbolProvider", true);    // ?
+        //c.addProperty("documentSymbolProvider", true);      // ?
+        // c.addProperty("documentFormattingProvider", true); // ?
+        // var codeLensOptions = new JsonObject();            // ?
+        // c.add("codeLensProvider", codeLensOptions);        // ?
         c.addProperty("foldingRangeProvider", true);
-        c.addProperty("codeActionProvider", true);
+        // c.addProperty("codeActionProvider", true); // KEEP FOR FUTURE WORK
         var renameOptions = new JsonObject();
         renameOptions.addProperty("prepareProvider", true);
         c.add("renameProvider", renameOptions);
@@ -198,7 +187,7 @@ public class JavaLanguageServer extends LanguageServer {
     }
 
     private static final String[] watchFiles = {
-            "**/*.java", "**/pom.xml", "**/BUILD",
+        "**/*.java", "**/pom.xml", "**/BUILD",
     };
 
     @Override
@@ -227,43 +216,10 @@ public class JavaLanguageServer extends LanguageServer {
     }
 
     @Override
-    public List<SymbolInformation> workspaceSymbols(WorkspaceSymbolParams params) {
-        return new SymbolProvider(compiler()).findSymbols(params.query, 50);
-    }
-
-    @Override
     public void didChangeConfiguration(DidChangeConfigurationParams change) {
         var java = change.settings.getAsJsonObject().get("java");
         LOG.info("Received java settings " + java);
         settings = java.getAsJsonObject();
-    }
-
-    @Override
-    public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
-        for (var c : params.changes) {
-            var file = Paths.get(c.uri);
-            if (FileStore.isJavaFile(file)) {
-                switch (c.type) {
-                    case FileChangeType.Created:
-                        FileStore.externalCreate(file);
-                        break;
-                    case FileChangeType.Changed:
-                        FileStore.externalChange(file);
-                        break;
-                    case FileChangeType.Deleted:
-                        FileStore.externalDelete(file);
-                        break;
-                }
-                return;
-            }
-            var name = file.getFileName().toString();
-            switch (name) {
-                case "BUILD":
-                case "pom.xml":
-                    LOG.info("Compiler needs to be re-created because " + file + " has changed");
-                    modifiedBuild = true;
-            }
-        }
     }
 
     @Override
@@ -311,196 +267,6 @@ public class JavaLanguageServer extends LanguageServer {
         if (help == SignatureProvider.NOT_SUPPORTED)
             return Optional.empty();
         return Optional.of(help);
-    }
-
-    @Override
-    public Optional<List<Location>> gotoDefinition(TextDocumentPositionParams position) {
-        if (!FileStore.isJavaFile(position.textDocument.uri))
-            return Optional.empty();
-        var file = Paths.get(position.textDocument.uri);
-        var line = position.position.line + 1;
-        var column = position.position.character + 1;
-        var found = new DefinitionProvider(compiler(), file, line, column).find();
-        if (found == DefinitionProvider.NOT_SUPPORTED) {
-            return Optional.empty();
-        }
-        return Optional.of(found);
-    }
-
-    @Override
-    public Optional<List<Location>> findReferences(ReferenceParams position) {
-        if (!FileStore.isJavaFile(position.textDocument.uri))
-            return Optional.empty();
-        var file = Paths.get(position.textDocument.uri);
-        var line = position.position.line + 1;
-        var column = position.position.character + 1;
-        var found = new ReferenceProvider(compiler(), file, line, column).find();
-        if (found == ReferenceProvider.NOT_SUPPORTED) {
-            return Optional.empty();
-        }
-        return Optional.of(found);
-    }
-
-    @Override
-    public List<SymbolInformation> documentSymbol(DocumentSymbolParams params) {
-        if (!FileStore.isJavaFile(params.textDocument.uri))
-            return List.of();
-        var file = Paths.get(params.textDocument.uri);
-        return new SymbolProvider(compiler()).documentSymbols(file);
-    }
-
-    @Override
-    public List<CodeLens> codeLens(CodeLensParams params) {
-        if (!FileStore.isJavaFile(params.textDocument.uri))
-            return List.of();
-        var file = Paths.get(params.textDocument.uri);
-        var task = compiler().parse(file);
-        return CodeLensProvider.find(task);
-    }
-
-    @Override
-    public CodeLens resolveCodeLens(CodeLens unresolved) {
-        return null;
-    }
-
-    @Override
-    public List<TextEdit> formatting(DocumentFormattingParams params) {
-        var edits = new ArrayList<TextEdit>();
-        var file = Paths.get(params.textDocument.uri);
-        var fixImports = new AutoFixImports(file).rewrite(compiler()).get(file);
-        Collections.addAll(edits, fixImports);
-        var addOverrides = new AutoAddOverrides(file).rewrite(compiler()).get(file);
-        Collections.addAll(edits, addOverrides);
-        return edits;
-    }
-
-    @Override
-    public List<FoldingRange> foldingRange(FoldingRangeParams params) {
-        if (!FileStore.isJavaFile(params.textDocument.uri))
-            return List.of();
-        var file = Paths.get(params.textDocument.uri);
-        return new FoldProvider(compiler()).foldingRanges(file);
-    }
-
-    @Override
-    public Optional<RenameResponse> prepareRename(TextDocumentPositionParams params) {
-        if (!FileStore.isJavaFile(params.textDocument.uri))
-            return Optional.empty();
-        LOG.info("Try to rename...");
-        var file = Paths.get(params.textDocument.uri);
-        try (var task = compiler().compile(file)) {
-            var lines = task.root().getLineMap();
-            var cursor = lines.getPosition(params.position.line + 1, params.position.character + 1);
-            var path = new FindNameAt(task).scan(task.root(), cursor);
-            if (path == null) {
-                LOG.info("...no element under cursor");
-                return Optional.empty();
-            }
-            var el = Trees.instance(task.task).getElement(path);
-            if (el == null) {
-                LOG.info("...couldn't resolve element");
-                return Optional.empty();
-            }
-            if (!canRename(el)) {
-                LOG.info("...can't rename " + el);
-                return Optional.empty();
-            }
-            if (!canFindSource(el)) {
-                LOG.info("...can't find source for " + el);
-                return Optional.empty();
-            }
-            var response = new RenameResponse();
-            response.range = FindHelper.location(task, path).range;
-            response.placeholder = el.getSimpleName().toString();
-            return Optional.of(response);
-        }
-    }
-
-    private boolean canRename(Element rename) {
-        switch (rename.getKind()) {
-            case METHOD:
-            case FIELD:
-            case LOCAL_VARIABLE:
-            case PARAMETER:
-            case EXCEPTION_PARAMETER:
-                return true;
-            default:
-                // TODO rename other types
-                return false;
-        }
-    }
-
-    private boolean canFindSource(Element rename) {
-        if (rename == null)
-            return false;
-        if (rename instanceof TypeElement) {
-            var type = (TypeElement) rename;
-            var name = type.getQualifiedName().toString();
-            return compiler().findTypeDeclaration(name) != CompilerProvider.NOT_FOUND;
-        }
-        return canFindSource(rename.getEnclosingElement());
-    }
-
-    @Override
-    public WorkspaceEdit rename(RenameParams params) {
-        var rw = createRewrite(params);
-        var response = new WorkspaceEdit();
-        var map = rw.rewrite(compiler());
-        for (var editedFile : map.keySet()) {
-            response.changes.put(editedFile.toUri(), List.of(map.get(editedFile)));
-        }
-        return response;
-    }
-
-    private Rewrite createRewrite(RenameParams params) {
-        var file = Paths.get(params.textDocument.uri);
-        try (var task = compiler().compile(file)) {
-            var lines = task.root().getLineMap();
-            var position = lines.getPosition(params.position.line + 1, params.position.character + 1);
-            var path = new FindNameAt(task).scan(task.root(), position);
-            if (path == null)
-                return Rewrite.NOT_SUPPORTED;
-            var el = Trees.instance(task.task).getElement(path);
-            switch (el.getKind()) {
-                case METHOD:
-                    return renameMethod(task, (ExecutableElement) el, params.newName);
-                case FIELD:
-                    return renameField(task, (VariableElement) el, params.newName);
-                case LOCAL_VARIABLE:
-                case PARAMETER:
-                case EXCEPTION_PARAMETER:
-                    return renameVariable(task, (VariableElement) el, params.newName);
-                default:
-                    return Rewrite.NOT_SUPPORTED;
-            }
-        }
-    }
-
-    private RenameMethod renameMethod(CompileTask task, ExecutableElement method, String newName) {
-        var parent = (TypeElement) method.getEnclosingElement();
-        var className = parent.getQualifiedName().toString();
-        var methodName = method.getSimpleName().toString();
-        var erasedParameterTypes = new String[method.getParameters().size()];
-        for (var i = 0; i < erasedParameterTypes.length; i++) {
-            var type = method.getParameters().get(i).asType();
-            erasedParameterTypes[i] = task.task.getTypes().erasure(type).toString();
-        }
-        return new RenameMethod(className, methodName, erasedParameterTypes, newName);
-    }
-
-    private RenameField renameField(CompileTask task, VariableElement field, String newName) {
-        var parent = (TypeElement) field.getEnclosingElement();
-        var className = parent.getQualifiedName().toString();
-        var fieldName = field.getSimpleName().toString();
-        return new RenameField(className, fieldName, newName);
-    }
-
-    private RenameVariable renameVariable(CompileTask task, VariableElement variable, String newName) {
-        var trees = Trees.instance(task.task);
-        var path = trees.getPath(variable);
-        var file = Paths.get(path.getCompilationUnit().getSourceFile().toUri());
-        var position = trees.getSourcePositions().getStartPosition(path.getCompilationUnit(), path.getLeaf());
-        return new RenameVariable(file, (int) position, newName);
     }
 
     private boolean uncheckedChanges = false;

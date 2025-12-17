@@ -28,23 +28,11 @@ public class LanguageServer {
         throw new RuntimeException("Unimplemented");
     }
 
-    public void willSaveTextDocument(WillSaveTextDocumentParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public List<TextEdit> willSaveWaitUntilTextDocument(WillSaveTextDocumentParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
     public void didSaveTextDocument(DidSaveTextDocumentParams params) {
         throw new RuntimeException("Unimplemented");
     }
 
     public void didCloseTextDocument(DidCloseTextDocumentParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
         throw new RuntimeException("Unimplemented");
     }
 
@@ -64,55 +52,11 @@ public class LanguageServer {
         throw new RuntimeException("Unimplemented");
     }
 
-    public Optional<List<Location>> gotoDefinition(TextDocumentPositionParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public Optional<List<Location>> findReferences(ReferenceParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public List<SymbolInformation> documentSymbol(DocumentSymbolParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public List<SymbolInformation> workspaceSymbols(WorkspaceSymbolParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
     public List<CodeAction> codeAction(CodeActionParams params) {
         throw new RuntimeException("Unimplemented");
     }
 
-    public List<CodeLens> codeLens(CodeLensParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public CodeLens resolveCodeLens(CodeLens params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public Optional<RenameResponse> prepareRename(TextDocumentPositionParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public WorkspaceEdit rename(RenameParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
     public void didChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public List<TextEdit> formatting(DocumentFormattingParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public List<FoldingRange> foldingRange(FoldingRangeParams params) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public List<DocumentLink> documentLink(DocumentLinkParams params) {
         throw new RuntimeException("Unimplemented");
     }
 

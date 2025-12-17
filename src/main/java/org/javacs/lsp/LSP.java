@@ -41,7 +41,7 @@ public class LSP {
 
     static class EndOfStream extends RuntimeException {}
 
-    // TODO this seems like it's probably really inefficient. Read in bulk?
+    // TODO read this in bulk instead ?
     private static char read(InputStream client) {
         try {
             var c = client.read();
@@ -280,26 +280,6 @@ public class LSP {
                             server.didChangeConfiguration(params);
                             break;
                         }
-                    case "workspace/didChangeWatchedFiles":
-                        {
-                            var params = gson.fromJson(r.params, DidChangeWatchedFilesParams.class);
-                            server.didChangeWatchedFiles(params);
-                            break;
-                        }
-                    case "workspace/symbol":
-                        {
-                            var params = gson.fromJson(r.params, WorkspaceSymbolParams.class);
-                            var response = server.workspaceSymbols(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
-                    case "textDocument/documentLink":
-                        {
-                            var params = gson.fromJson(r.params, DocumentLinkParams.class);
-                            var response = server.documentLink(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
                     case "textDocument/didOpen":
                         {
                             var params = gson.fromJson(r.params, DidOpenTextDocumentParams.class);
@@ -310,19 +290,6 @@ public class LSP {
                         {
                             var params = gson.fromJson(r.params, DidChangeTextDocumentParams.class);
                             server.didChangeTextDocument(params);
-                            break;
-                        }
-                    case "textDocument/willSave":
-                        {
-                            var params = gson.fromJson(r.params, WillSaveTextDocumentParams.class);
-                            server.willSaveTextDocument(params);
-                            break;
-                        }
-                    case "textDocument/willSaveWaitUntil":
-                        {
-                            var params = gson.fromJson(r.params, WillSaveTextDocumentParams.class);
-                            var response = server.willSaveWaitUntilTextDocument(params);
-                            respond(send, r.id, response);
                             break;
                         }
                     case "textDocument/didSave":
@@ -365,73 +332,10 @@ public class LSP {
                             respond(send, r.id, response);
                             break;
                         }
-                    case "textDocument/definition":
-                        {
-                            var params = gson.fromJson(r.params, TextDocumentPositionParams.class);
-                            var response = server.gotoDefinition(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
-                    case "textDocument/references":
-                        {
-                            var params = gson.fromJson(r.params, ReferenceParams.class);
-                            var response = server.findReferences(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
-                    case "textDocument/documentSymbol":
-                        {
-                            var params = gson.fromJson(r.params, DocumentSymbolParams.class);
-                            var response = server.documentSymbol(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
-                    case "textDocument/codeAction":
+                    case "textDocument/codeAction": // FUTURE WORK
                         {
                             var params = gson.fromJson(r.params, CodeActionParams.class);
                             var response = server.codeAction(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
-                    case "textDocument/codeLens":
-                        {
-                            var params = gson.fromJson(r.params, CodeLensParams.class);
-                            var response = server.codeLens(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
-                    case "codeLens/resolve":
-                        {
-                            var params = gson.fromJson(r.params, CodeLens.class);
-                            var response = server.resolveCodeLens(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
-                    case "textDocument/prepareRename":
-                        {
-                            var params = gson.fromJson(r.params, TextDocumentPositionParams.class);
-                            var response = server.prepareRename(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
-                    case "textDocument/rename":
-                        {
-                            var params = gson.fromJson(r.params, RenameParams.class);
-                            var response = server.rename(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
-                    case "textDocument/formatting":
-                        {
-                            var params = gson.fromJson(r.params, DocumentFormattingParams.class);
-                            var response = server.formatting(params);
-                            respond(send, r.id, response);
-                            break;
-                        }
-                    case "textDocument/foldingRange":
-                        {
-                            var params = gson.fromJson(r.params, FoldingRangeParams.class);
-                            var response = server.foldingRange(params);
                             respond(send, r.id, response);
                             break;
                         }
@@ -452,41 +356,3 @@ public class LSP {
 
     private static final Logger LOG = Logger.getLogger("main");
 }
-
-/*package org.javacs;
-
-import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.javacs.lsp.*;
-
-public class Main {
-    private static final Logger LOG = Logger.getLogger("main");
-
-    public static void setRootFormat() {
-        var root = Logger.getLogger("");
-
-        for (var h : root.getHandlers()) {
-            h.setFormatter(new LogFormat());
-        }
-    }
-
-    public static void main(String[] args) {
-        boolean quiet = Arrays.stream(args).anyMatch("--quiet"::equals);
-
-        if (quiet) {
-            LOG.setLevel(Level.OFF);
-        }
-
-        try {
-            // Logger.getLogger("").addHandler(new FileHandler("javacs.%u.log", false));
-            setRootFormat();
-
-            LSP.connect(JavaLanguageServer::new, System.in, System.out);
-        } catch (Throwable t) {
-            LOG.log(Level.SEVERE, t.getMessage(), t);
-
-            System.exit(1);
-        }
-    }
-} */
