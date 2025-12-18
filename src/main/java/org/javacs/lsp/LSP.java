@@ -166,10 +166,12 @@ public class LSP {
     }
 
     public static void connect(
-            Function<LanguageClient, LanguageServer> serverFactory, InputStream receive, OutputStream send) {
+            Function<LanguageClient, LanguageServer> serverFactory, InputStream rawReceive, OutputStream send) {
         var server = serverFactory.apply(new RealClient(send));
         var pending = new ArrayBlockingQueue<Message>(10);
         var endOfStream = new Message();
+        // the connect param "receive" is replaced by this receive to bufer the header parsing
+        var receive = new BufferedInputStream(rawReceive, 65536); // 64KB (default is 8KB)
 
         // Read messages and process cancellations on a separate thread
         class MessageReader implements Runnable {
