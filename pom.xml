@@ -7,7 +7,7 @@
 
   <groupId>io.github.simplicitesoftware</groupId>
   <artifactId>java-language-server</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2-SNAPSHOT</version>
   <name>Simplicite Java LSP</name>
   <description>Simplicite Java Language Server - EXPERIMENTAL - forked from georgewfraser/java-language-server</description>
   <url>https://github.com/simplicitesoftware/java-language-server/blob/main/README.md</url>
