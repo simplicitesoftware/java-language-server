@@ -170,14 +170,14 @@ public class JavaLanguageServer extends LanguageServer {
         signatureTrigger.add(",");
         signatureHelpOptions.add("triggerCharacters", signatureTrigger);
         c.add("signatureHelpProvider", signatureHelpOptions);
-        // c.addProperty("referencesProvider", true);         // REMOVE OR 'FALSE' FOR TRACK ?
+        // c.addProperty("referencesProvider", true);         // ? REMOVE OR 'FALSE' FOR TRACK ?
         // c.addProperty("definitionProvider", true);         // ?
         // c.addProperty("workspaceSymbolProvider", true);    // ?
         //c.addProperty("documentSymbolProvider", true);      // ?
         // c.addProperty("documentFormattingProvider", true); // ?
         // var codeLensOptions = new JsonObject();            // ?
         // c.add("codeLensProvider", codeLensOptions);        // ?
-        c.addProperty("foldingRangeProvider", true);
+        // c.addProperty("foldingRangeProvider", true);       // ?
         // c.addProperty("codeActionProvider", true); // KEEP FOR FUTURE WORK
         var renameOptions = new JsonObject();
         renameOptions.addProperty("prepareProvider", true);
@@ -187,7 +187,7 @@ public class JavaLanguageServer extends LanguageServer {
     }
 
     private static final String[] watchFiles = {
-        "**/*.java", "**/pom.xml", "**/BUILD",
+        "**/*.java", "**/pom.xml",
     };
 
     @Override

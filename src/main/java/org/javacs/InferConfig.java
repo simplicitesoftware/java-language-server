@@ -2,7 +2,6 @@ package org.javacs;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,33 +19,26 @@ class InferConfig
     private final Collection<String> externalDependencies;
     /** Location of the maven repository, usually ~/.m2 */
     private final Path mavenHome;
-    /** Location of the gradle cache, usually ~/.gradle */
-    private final Path gradleHome;
 
-    InferConfig(Path workspaceRoot, Collection<String> externalDependencies, Path mavenHome, Path gradleHome) {
+    InferConfig(Path workspaceRoot, Collection<String> externalDependencies, Path mavenHome) {
         this.workspaceRoot = workspaceRoot;
         this.externalDependencies = externalDependencies;
         this.mavenHome = mavenHome;
-        this.gradleHome = gradleHome;
     }
 
     InferConfig(Path workspaceRoot, Collection<String> externalDependencies) {
-        this(workspaceRoot, externalDependencies, defaultMavenHome(), defaultGradleHome());
+        this(workspaceRoot, externalDependencies, defaultMavenHome());
     }
 
     InferConfig(Path workspaceRoot) {
-        this(workspaceRoot, Collections.emptySet(), defaultMavenHome(), defaultGradleHome());
+        this(workspaceRoot, Collections.emptySet(), defaultMavenHome());
     }
 
     private static Path defaultMavenHome() {
         return Paths.get(System.getProperty("lsp.home", System.getProperty("user.home"))).resolve(".m2");
     }
 
-    private static Path defaultGradleHome() {
-        return Paths.get(System.getProperty("lsp.home", System.getProperty("user.home"))).resolve(".gradle");
-    }
-
-    /** Find .jar files for external dependencies, for examples maven dependencies in ~/.m2 or jars in bazel-genfiles */
+    /** Find .jar files for external dependencies, for examples maven dependencies in ~/.m2 */
     Set<Path> classPath() {
         // externalDependencies
         if (!externalDependencies.isEmpty()) {
@@ -55,7 +47,7 @@ class InferConfig
                 var a = Artifact.parse(id);
                 var found = findAnyJar(a, false);
                 if (found == NOT_FOUND) {
-                    LOG.warning(String.format("Couldn't find jar for %s in %s or %s", a, mavenHome, gradleHome));
+                    LOG.warning(String.format("Couldn't find jar for %s in %s", a, mavenHome));
                     continue;
                 }
                 result.add(found);
@@ -81,7 +73,7 @@ class InferConfig
                 var a = Artifact.parse(id);
                 var found = findAnyJar(a, true);
                 if (found == NOT_FOUND) {
-                    LOG.warning(String.format("Couldn't find doc jar for %s in %s or %s", a, mavenHome, gradleHome));
+                    LOG.warning(String.format("Couldn't find doc jar for %s in %s", a, mavenHome));
                     continue;
                 }
                 result.add(found);
@@ -101,10 +93,6 @@ class InferConfig
     private Path findAnyJar(Artifact artifact, boolean source) {
         Path maven = findMavenJar(artifact, source);
         return maven; // even if NOT_FOUND
-
-        /*if (maven != NOT_FOUND) {
-            return maven;
-        } else return findGradleJar(artifact, source);*/
     }
 
     Path findMavenJar(Artifact artifact, boolean source) {
@@ -121,31 +109,6 @@ class InferConfig
         }
         return jar;
     }
-
-    // private Path findGradleJar(Artifact artifact, boolean source) {
-    //     LOG.info("LSP - INFERCONFIG - findGradleJar");
-    //     // Search for caches/modules-*/files-*/groupId/artifactId/version/*/artifactId-version[-sources].jar
-    //     var base = gradleHome.resolve("caches");
-    //     var pattern =
-    //             "glob:"
-    //                     + String.join(
-    //                             File.separator,
-    //                             base.toString(),
-    //                             "modules-*",
-    //                             "files-*",
-    //                             artifact.groupId,
-    //                             artifact.artifactId,
-    //                             artifact.version,
-    //                             "*",
-    //                             fileName(artifact, source));
-    //     var match = FileSystems.getDefault().getPathMatcher(pattern);
-
-    //     try {
-    //         return Files.walk(base, 7).filter(match::matches).findFirst().orElse(NOT_FOUND);
-    //     } catch (IOException e) {
-    //         throw new RuntimeException(e);
-    //     }
-    // }
 
     private String fileName(Artifact artifact, boolean source) {
         return artifact.artifactId + '-' + artifact.version + (source ? "-sources" : "") + ".jar";
