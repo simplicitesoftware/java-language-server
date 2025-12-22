@@ -167,6 +167,7 @@ public class LSP {
 
     public static void connect(
             Function<LanguageClient, LanguageServer> serverFactory, InputStream rawReceive, OutputStream send) {
+        LOG.warning(">>> LSP.connect > shoudln't see this");
         var server = serverFactory.apply(new RealClient(send));
         var pending = new ArrayBlockingQueue<Message>(10);
         var endOfStream = new Message();
