@@ -49,18 +49,21 @@ public class JavaLanguageServer extends LanguageServer {
         if (files.isEmpty())
             return;
         LOG.info("Lint " + files.size() + " files...");
-        var started = Instant.now();
+        // var started = Instant.now();
         try (var task = compiler().compile(files.toArray(Path[]::new))) {
-            var compiled = Instant.now();
-            LOG.info("...compiled in " + Duration.between(started, compiled).toMillis() + " ms");
             for (var errs : new ErrorProvider(task).errors()) {
                 client.publishDiagnostics(errs);
             }
-            /*for (var colors : new ColorProvider(task).colors()) {
-                client.customNotification("java/colors", GSON.toJsonTree(colors));
-            }*/
-            var published = Instant.now();
-            LOG.info("...published in " + Duration.between(started, published).toMillis() + " ms");
+            LOG.info("... published");
+        }
+    }
+
+    void singleLint(Path file) {
+        LOG.info("Lint - single file ...");
+        // is this properly forwarding the infos & warnings ? or only errors ?
+        try (var task = compiler().compile(file)) {
+            for (var errs : new ErrorProvider(task).errors())
+                client.publishDiagnostics(errs);
         }
     }
 
@@ -170,15 +173,7 @@ public class JavaLanguageServer extends LanguageServer {
         signatureTrigger.add(",");
         signatureHelpOptions.add("triggerCharacters", signatureTrigger);
         c.add("signatureHelpProvider", signatureHelpOptions);
-        // c.addProperty("referencesProvider", true);         // ? REMOVE OR 'FALSE' FOR TRACK ?
-        // c.addProperty("definitionProvider", true);         // ?
-        // c.addProperty("workspaceSymbolProvider", true);    // ?
-        //c.addProperty("documentSymbolProvider", true);      // ?
-        // c.addProperty("documentFormattingProvider", true); // ?
-        // var codeLensOptions = new JsonObject();            // ?
-        // c.add("codeLensProvider", codeLensOptions);        // ?
-        // c.addProperty("foldingRangeProvider", true);       // ?
-        // c.addProperty("codeActionProvider", true); // KEEP FOR FUTURE WORK
+        // c.addProperty("codeActionProvider", true); // FUTURE WORK
         var renameOptions = new JsonObject();
         renameOptions.addProperty("prepareProvider", true);
         c.add("renameProvider", renameOptions);
@@ -319,7 +314,7 @@ public class JavaLanguageServer extends LanguageServer {
     @Override
     public void doAsyncWork() {
         if (uncheckedChanges && FileStore.activeDocuments().contains(lastEdited)) {
-            lint(List.of(lastEdited));
+            singleLint(lastEdited);
             uncheckedChanges = false;
         }
     }
