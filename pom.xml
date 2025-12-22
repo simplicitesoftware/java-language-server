@@ -7,7 +7,7 @@
 
   <groupId>io.github.simplicitesoftware</groupId>
   <artifactId>java-language-server</artifactId>
-  <version>1.0.2-SNAPSHOT</version>
+  <version>1.0.2</version>
   <name>Simplicite Java LSP</name>
   <description>Simplicite Java Language Server - EXPERIMENTAL - forked from georgewfraser/java-language-server</description>
   <url>https://github.com/simplicitesoftware/java-language-server/blob/main/README.md</url>
@@ -51,7 +51,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.9.0</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -88,7 +88,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.14.1</version>
           <configuration>
             <compilerArgs>
                 <arg>--add-exports</arg><arg>jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
@@ -105,7 +105,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.10.0</version>
+        <version>3.12.0</version>
         <executions>
           <execution>
             <goals>
@@ -130,7 +130,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.3.1</version>
+        <version>3.4.0</version>
         <executions>
           <execution>
             <goals>
@@ -156,7 +156,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>3.2.5</version>
+        <version>3.2.8</version>
         <executions>
           <execution>
             <goals>
@@ -169,7 +169,7 @@
       <plugin>
         <groupId>org.sonatype.central</groupId>
         <artifactId>central-publishing-maven-plugin</artifactId>
-        <version>0.5.0</version>
+        <version>0.9.0</version>
         <extensions>true</extensions>
         <configuration>
           <publishingServerId>central</publishingServerId>
@@ -182,12 +182,12 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.13.0</version>
+      <version>2.13.2</version>
     </dependency>
     <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
-        <version>4.30.2</version>
+        <version>4.33.2</version>
     </dependency>
   </dependencies>
 
