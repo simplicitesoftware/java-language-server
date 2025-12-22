@@ -7,18 +7,17 @@ Java Language Server
 Build
 -----
 
-	rm -fr target
-	mvn clean package
-
-Test
-----
-
-**TODO**
+```shell
+rm -fr target
+mvn clean package
+```
 
 Publish
 -------
 
-	mvn deploy
+```shell
+mvn deploy
+```
 
 **Note**: before publishing make sure you have defined the `central` server with credentials in yous Maven's `setting.xml`, e.g.:
 
@@ -38,5 +37,5 @@ Publish
 
 Such credentials can be generated on your [Sonatype account page](https://central.sonatype.com/account)
 
-If everything works fine you should see the deployment on your [Sonatype publishing page](https://central.sonatype.com/publishing/deployment]
+If everything works fine you should see the deployment on your [Sonatype publishing page](https://central.sonatype.com/publishing/deployment)
 and you can publish it.
