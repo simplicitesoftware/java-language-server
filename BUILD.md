@@ -12,6 +12,14 @@ rm -fr target
 mvn clean package
 ```
 
+Force Build despite "known" errors
+----------------------------------
+
+```shell
+rm -rf target
+mvn clean package -Dmaven.javadoc.skip=true -Dgpg.skip=true
+```
+
 Publish
 -------
 
