@@ -7,7 +7,7 @@
 
   <groupId>io.github.simplicitesoftware</groupId>
   <artifactId>java-language-server</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
   <name>Simplicite Java LSP</name>
   <description>Simplicite Java Language Server - EXPERIMENTAL - forked from georgewfraser/java-language-server</description>
   <url>https://github.com/simplicitesoftware/java-language-server/blob/main/README.md</url>
@@ -51,7 +51,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.9.0</version>
+        <version>3.10.0</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -72,6 +72,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.8.0</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -88,7 +89,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.1</version>
+        <version>3.15.0</version>
           <configuration>
             <compilerArgs>
                 <arg>--add-exports</arg><arg>jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
@@ -169,7 +170,7 @@
       <plugin>
         <groupId>org.sonatype.central</groupId>
         <artifactId>central-publishing-maven-plugin</artifactId>
-        <version>0.9.0</version>
+        <version>0.10.0</version>
         <extensions>true</extensions>
         <configuration>
           <publishingServerId>central</publishingServerId>
@@ -187,7 +188,7 @@
     <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
-        <version>4.33.2</version>
+        <version>4.34.0</version>
     </dependency>
   </dependencies>
 
