@@ -35,8 +35,7 @@ public class MarkdownHelper {
     }
 
     public static String asMarkdown(DocCommentTree comment) {
-        var lines = comment.getFirstSentence();
-        return asMarkdown(lines);
+        return asMarkdown(comment.getFullBody()); // meh
     }
 
     private static String asMarkdown(List<? extends DocTree> lines) {

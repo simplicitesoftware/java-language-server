@@ -13,6 +13,11 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * This class has been removed from usage (but kept as core example/inspiration)<br>
+ * This logic ws moved up to Simplicité's runtime, allowing for faster execution & deeper control
+ * @deprecated
+ */
 public class LSP {
     private static final Gson gson = new Gson();
 
