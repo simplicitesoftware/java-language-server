@@ -34,9 +34,12 @@ public class MarkdownHelper {
         return content;
     }
 
-    public static String asMarkdown(DocCommentTree comment) {
-        var lines = comment.getFirstSentence();
-        return asMarkdown(lines);
+   public static String asMarkdown(DocCommentTree comment) {
+        try {
+        return asMarkdown(comment.getFullBody());
+        } catch (RuntimeException e) {
+            return "**Malformed javadoc HTML**";
+        }
     }
 
     private static String asMarkdown(List<? extends DocTree> lines) {
