@@ -1,95 +1,49 @@
 package org.javacs;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.nio.CharBuffer;
-import java.util.List;
 import java.util.StringJoiner;
-import java.util.function.Function;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import org.javacs.lsp.MarkupContent;
 import org.javacs.lsp.MarkupKind;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 import com.sun.source.doctree.DocCommentTree;
-import com.sun.source.doctree.DocTree;
 
 public class MarkdownHelper {
 
 	public static MarkupContent asMarkupContent(DocCommentTree comment) {
-		var markdown = asMarkdown(comment);
 		var content = new MarkupContent();
 		content.kind = MarkupKind.Markdown;
-		content.value = markdown;
+		content.value = asMarkdown(comment);
 		return content;
 	}
 
 	public static String asMarkdown(DocCommentTree comment) {
 		try {
-			return asMarkdown(comment.getFullBody());
+			var join = new StringJoiner("");
+			for (var l : comment.getFullBody()) {
+				join.add(l.toString());
+			}
+			return normalizeJavadocHtml(replaceTags(join.toString()));
 		} catch (RuntimeException e) {
-			return "**Malformed javadoc HTML**: " + e.getMessage();
+			// Return raw content instead of error message
+			return comment.getFullBody().stream()
+				.map(Object::toString)
+				.collect(java.util.stream.Collectors.joining("\n"));
 		}
 	}
 
-	private static String asMarkdown(List<? extends DocTree> lines) {
-		var join = new StringJoiner("\n");
-		for (var l : lines) {
-			join.add(l.toString());
-		}
-		var html = join.toString();
-		return asMarkdown(html);
-	}
+	private static String normalizeJavadocHtml(String html) {
+		html = html.replaceAll("<div[^>]*>", "").replaceAll("</div>", "");
 
-	private static Document parse(String html) {
-		try {
-			var xml = "<wrapper>" + html + "</wrapper>";
-			var factory = DocumentBuilderFactory.newInstance();
-			factory.setNamespaceAware(false);
-			var builder = factory.newDocumentBuilder();
-			return builder.parse(new InputSource(new StringReader(xml)));
-		} catch (ParserConfigurationException | SAXException | IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+		html = html.replaceAll("<br\\s*/?>", "\n");
 
-	private static void replaceNodes(Document doc, String tagName, Function<String, String> replace) {
-		var nodes = doc.getElementsByTagName(tagName);
-		while (nodes.getLength() > 0) {
-			var node = nodes.item(0);
-			var parent = node.getParentNode();
-			var text = replace.apply(node.getTextContent().trim());
-			var replacement = doc.createTextNode(text);
-			parent.replaceChild(replacement, node);
-			nodes = doc.getElementsByTagName(tagName);
-		}
-	}
+		html = html.replaceAll("(?s)<li>(.*?)</li>", "\n- $1");
+		html = html.replaceAll("\\s*</?[uUoO][lL]>\\s*", "\n\n");
 
-	private static String print(Document doc) {
-		try {
-			var tf = TransformerFactory.newInstance();
-			var transformer = tf.newTransformer();
-			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-			var writer = new StringWriter();
-			transformer.transform(new DOMSource(doc), new StreamResult(writer));
-			var wrapped = writer.getBuffer().toString();
-			return wrapped.substring("<wrapper>".length(), wrapped.length() - "</wrapper>".length());
-		} catch (TransformerException e) {
-			throw new RuntimeException(e);
-		}
+		html = html.replaceAll("(?m)^[ \\t]+$", "");
+		html = html.replaceAll("\\n{3,}", "\n\n");
+
+		return html.strip();
 	}
 
 	private static void check(CharBuffer in, char expected) {
@@ -168,44 +122,6 @@ public class MarkdownHelper {
 		var out = new StringBuilder();
 		parse(CharBuffer.wrap(in), out);
 		return out.toString();
-	}
-
-	private static String htmlToMarkdown(String html) {
-		html = replaceTags(html);
-
-		var doc = parse(html);
-
-		replaceNodes(doc, "i", contents -> String.format("*%s*", contents));
-		replaceNodes(doc, "b", contents -> String.format("**%s**", contents));
-		replaceNodes(doc, "pre", contents -> String.format("`%s`", contents));
-		replaceNodes(doc, "code", contents -> String.format("`%s`", contents));
-		replaceNodes(doc, "a", contents -> contents);
-
-		return print(doc);
-	}
-
-	private static final Pattern HTML_TAG = Pattern.compile("<(\\w+)[^>]*>");
-
-	private static boolean isHtml(String text) {
-		var tags = HTML_TAG.matcher(text);
-		while (tags.find()) {
-			var tag = tags.group(1);
-			var close = String.format("</%s>", tag);
-			var findClose = text.indexOf(close, tags.end());
-			if (findClose != -1) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/** If `commentText` looks like HTML, convert it to markdown */
-	static String asMarkdown(String commentText) {
-		if (isHtml(commentText)) {
-			commentText = htmlToMarkdown(commentText);
-		}
-		commentText = replaceTags(commentText);
-		return commentText;
 	}
 
 	private static final Logger LOG = Logger.getLogger("main");
