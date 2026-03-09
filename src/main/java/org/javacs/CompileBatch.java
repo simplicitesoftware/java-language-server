@@ -39,10 +39,13 @@ class CompileBatch implements AutoCloseable {
                 roots.add(t);
             }
             // The results of borrow.task.analyze() are unreliable when errors are present
-            // You can get at `Element` values using `Trees`
             borrow.task.analyze();
         } catch (IOException e) {
+            borrow.close(); // resets checkedOut before propagating
             throw new RuntimeException(e);
+        } catch (RuntimeException e) {
+            borrow.close(); // resets checkedOut before propagating
+            throw e;
         }
     }
 

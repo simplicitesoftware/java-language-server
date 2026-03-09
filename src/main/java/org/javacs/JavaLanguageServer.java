@@ -49,7 +49,6 @@ public class JavaLanguageServer extends LanguageServer {
         if (files.isEmpty())
             return;
         LOG.info("Lint " + files.size() + " files...");
-        // var started = Instant.now();
         try (var task = compiler().compile(files.toArray(Path[]::new))) {
             for (var errs : new ErrorProvider(task).errors()) {
                 client.publishDiagnostics(errs);
@@ -60,10 +59,10 @@ public class JavaLanguageServer extends LanguageServer {
 
     void singleLint(Path file) {
         LOG.info("Lint - single file ...");
-        // is this properly forwarding the infos & warnings ? or only errors ?
         try (var task = compiler().compile(file)) {
             for (var errs : new ErrorProvider(task).errors())
                 client.publishDiagnostics(errs);
+            LOG.info("... done");
         }
     }
 
