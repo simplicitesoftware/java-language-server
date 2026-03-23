@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.lang.model.util.*;
 import javax.tools.*;
@@ -38,8 +39,14 @@ class CompileBatch implements AutoCloseable {
             for (var t : borrow.task.parse()) {
                 roots.add(t);
             }
-            // The results of borrow.task.analyze() are unreliable when errors are present
-            borrow.task.analyze();
+            // results of borrow.task.analyze() are unreliable when errors are present
+            try {
+                borrow.task.analyze();
+            } catch (Exception e) {
+                // javac can throw AssertionError/IllegalStateException on certain malformed code
+                // parse results and diagnostics are still available -> continue with parse-only results instead of crashing
+                LOG.warning("analyze() failed, continuing with parse-only results: " + e.getMessage());
+            }
         } catch (IOException e) {
             borrow.close(); // resets checkedOut before propagating
             throw new RuntimeException(e);
@@ -145,4 +152,6 @@ class CompileBatch implements AutoCloseable {
     private boolean isValidFileRange(javax.tools.Diagnostic<? extends JavaFileObject> d) {
         return d.getSource().toUri().getScheme().equals("file") && d.getStartPosition() >= 0 && d.getEndPosition() >= 0;
     }
+
+    private static final Logger LOG = Logger.getLogger("main");
 }

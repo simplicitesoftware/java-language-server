@@ -5,8 +5,8 @@ import static org.javacs.JsonHelper.GSON;
 import com.google.gson.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.Instant;
+// import java.time.Duration;
+// import java.time.Instant;
 import java.util.*;
 import java.util.logging.Logger;
 import org.javacs.action.CodeActionProvider;
@@ -17,7 +17,7 @@ import org.javacs.lsp.*;
 import org.javacs.markup.ErrorProvider;
 
 public class JavaLanguageServer extends LanguageServer {
-    // TODO (?) allow multiple workspace roots
+    // allow multiple workspace roots ?
     private Path workspaceRoot;
     private final LanguageClient client;
     private JavaCompilerService cacheCompiler;
@@ -63,6 +63,10 @@ public class JavaLanguageServer extends LanguageServer {
             for (var errs : new ErrorProvider(task).errors())
                 client.publishDiagnostics(errs);
             LOG.info("... done");
+        } catch (Exception e) {
+            // javac can throw AssertionError/IllegalStateException on malformed code
+            // (e.g. erroneous nodes in catch clauses) — degrade gracefully, do not propagate
+            LOG.warning("singleLint failed for " + file + " (likely syntax error in source): " + e.getMessage());
         }
     }
 
@@ -156,7 +160,7 @@ public class JavaLanguageServer extends LanguageServer {
         this.workspaceRoot = Paths.get(params.rootUri);
         FileStore.setWorkspaceRoots(Set.of(Paths.get(params.rootUri)));
 
-        // TODO: refine to only Simplicité's usages
+        // TODO: refine to only Simplicité's usages ?
         var c = new JsonObject();
         c.addProperty("textDocumentSync", 2); // Incremental
         c.addProperty("hoverProvider", true);
@@ -221,11 +225,16 @@ public class JavaLanguageServer extends LanguageServer {
         if (!FileStore.isJavaFile(params.textDocument.uri))
             return Optional.empty();
         var file = Paths.get(params.textDocument.uri);
-        var provider = new CompletionProvider(compiler());
-        var list = provider.complete(file, params.position.line + 1, params.position.character + 1);
-        if (list == CompletionProvider.NOT_SUPPORTED)
+        try {
+            var provider = new CompletionProvider(compiler());
+            var list = provider.complete(file, params.position.line + 1, params.position.character + 1);
+            if (list == CompletionProvider.NOT_SUPPORTED)
+                return Optional.empty();
+            return Optional.of(list);
+        } catch (Exception e) {
+            LOG.warning("completion failed for " + file + " (likely syntax error): " + e.getMessage());
             return Optional.empty();
-        return Optional.of(list);
+        }
     }
 
     @Override
@@ -242,12 +251,16 @@ public class JavaLanguageServer extends LanguageServer {
         if (!FileStore.isJavaFile(uri))
             return Optional.empty();
         var file = Paths.get(uri);
-        var list = new HoverProvider(compiler()).hover(file, line, column);
-        if (list == HoverProvider.NOT_SUPPORTED) {
+        try {
+            var list = new HoverProvider(compiler()).hover(file, line, column);
+            if (list == HoverProvider.NOT_SUPPORTED)
+                return Optional.empty();
+            // TODO add range
+            return Optional.of(new Hover(list));
+        } catch (Exception e) {
+            LOG.warning("hover failed for " + file + " (likely syntax error): " + e.getMessage());
             return Optional.empty();
         }
-        // TODO add range
-        return Optional.of(new Hover(list));
     }
 
     @Override
@@ -257,10 +270,15 @@ public class JavaLanguageServer extends LanguageServer {
         var file = Paths.get(params.textDocument.uri);
         var line = params.position.line + 1;
         var column = params.position.character + 1;
-        var help = new SignatureProvider(compiler()).signatureHelp(file, line, column);
-        if (help == SignatureProvider.NOT_SUPPORTED)
+        try {
+            var help = new SignatureProvider(compiler()).signatureHelp(file, line, column);
+            if (help == SignatureProvider.NOT_SUPPORTED)
+                return Optional.empty();
+            return Optional.of(help);
+        } catch (Exception e) {
+            LOG.warning("signatureHelp failed for " + file + " (likely syntax error): " + e.getMessage());
             return Optional.empty();
-        return Optional.of(help);
+        }
     }
 
     private boolean uncheckedChanges = false;
@@ -294,11 +312,16 @@ public class JavaLanguageServer extends LanguageServer {
 
     @Override
     public List<CodeAction> codeAction(CodeActionParams params) {
-        var provider = new CodeActionProvider(compiler());
-        if (params.context.diagnostics.isEmpty()) {
-            return provider.codeActionsForCursor(params);
-        } else {
-            return provider.codeActionForDiagnostics(params);
+        try {
+            var provider = new CodeActionProvider(compiler());
+            if (params.context.diagnostics.isEmpty()) {
+                return provider.codeActionsForCursor(params);
+            } else {
+                return provider.codeActionForDiagnostics(params);
+            }
+        } catch (Exception e) {
+            LOG.warning("codeAction failed (likely syntax error): " + e.getMessage());
+            return List.of();
         }
     }
 
@@ -313,8 +336,9 @@ public class JavaLanguageServer extends LanguageServer {
     @Override
     public void doAsyncWork() {
         if (uncheckedChanges && FileStore.activeDocuments().contains(lastEdited)) {
+            uncheckedChanges = false; // before to prevent loop
             singleLint(lastEdited);
-            uncheckedChanges = false;
+            // lint(List.of(lastEdited));
         }
     }
 
