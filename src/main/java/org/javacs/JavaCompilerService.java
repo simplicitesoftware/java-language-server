@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.tools.*;
@@ -20,15 +21,17 @@ class JavaCompilerService implements CompilerProvider {
     // Use the same file manager for multiple tasks, so we don't repeatedly re-compile the same files
     // TODO intercept files that aren't in the batch and erase method bodies so compilation is faster
     final SourceFileManager fileManager;
+    final Logger logger;
 
-    JavaCompilerService(Set<Path> classPath, Set<Path> docPath, Set<String> addExports) {
-        System.err.println("Class path:");
-        for (var p : classPath) {
-            System.err.println("  " + p);
-        }
-        System.err.println("Doc path:");
+    JavaCompilerService(Set<Path> classPath, Set<Path> docPath, Set<String> addExports, Logger logger) {
+        this.logger = logger;
+
+        logger.info("Class path:");
+        for (var p : classPath)
+            logger.info("  " + p);
+        logger.info("Doc path:");
         for (var p : docPath) {
-            System.err.println("  " + p);
+            logger.info("  " + p);
         }
         // classPath can't actually be modified, because JavaCompiler remembers it from task to task
         this.classPath = Collections.unmodifiableSet(classPath);
@@ -77,7 +80,7 @@ class JavaCompilerService implements CompilerProvider {
         var addFiles = firstAttempt.needsAdditionalSources();
         if (addFiles.isEmpty()) return firstAttempt;
         // If the compiler needs additional source files that contain package-private files
-        LOG.info("...need to recompile with " + addFiles);
+        logger.info("...need to recompile with " + addFiles);
         firstAttempt.close();
         firstAttempt.borrow.close();
         var moreSources = new ArrayList<JavaFileObject>();
@@ -92,7 +95,7 @@ class JavaCompilerService implements CompilerProvider {
         if (needsCompile(sources)) {
             loadCompile(sources);
         } else {
-            LOG.info("...using cached compile");
+            logger.info("...using cached compile");
         }
         return cachedCompile;
     }
@@ -257,7 +260,7 @@ class JavaCompilerService implements CompilerProvider {
                 var fromModuleSourcePath =
                         docs.fileManager.getJavaFileForInput(moduleLocation, className, JavaFileObject.Kind.SOURCE);
                 if (fromModuleSourcePath != null) {
-                    LOG.info(String.format("...found %s in module %s of jdk", fromModuleSourcePath.toUri(), module));
+                    logger.info(String.format("...found %s in module %s of jdk", fromModuleSourcePath.toUri(), module));
                     return Optional.of(fromModuleSourcePath);
                 }
             }
@@ -349,6 +352,4 @@ class JavaCompilerService implements CompilerProvider {
         var compile = compileBatch(sources);
         return new CompileTask(compile.task, compile.roots, diags, compile::close);
     }
-
-    private static final Logger LOG = Logger.getLogger("main");
 }

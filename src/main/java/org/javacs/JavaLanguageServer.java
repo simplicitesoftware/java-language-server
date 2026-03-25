@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 // import java.time.Duration;
 // import java.time.Instant;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.javacs.action.CodeActionProvider;
 import org.javacs.completion.CompletionProvider;
@@ -39,7 +40,7 @@ public class JavaLanguageServer extends LanguageServer {
             return true;
         }
         if (!settings.equals(cacheSettings)) {
-            LOG.info("Settings\n\t" + settings + "\nis different than\n\t" + cacheSettings);
+            logger.info("Settings\n\t" + settings + "\nis different than\n\t" + cacheSettings);
             return true;
         }
         return false;
@@ -48,25 +49,25 @@ public class JavaLanguageServer extends LanguageServer {
     void lint(Collection<Path> files) {
         if (files.isEmpty())
             return;
-        LOG.info("Lint " + files.size() + " files...");
+        logger.info("Lint " + files.size() + " files...");
         try (var task = compiler().compile(files.toArray(Path[]::new))) {
             for (var errs : new ErrorProvider(task).errors()) {
                 client.publishDiagnostics(errs);
             }
-            LOG.info("... published");
+            logger.info("... published");
         }
     }
 
     void singleLint(Path file) {
-        LOG.info("Lint - single file ...");
+        logger.info("Lint - single file ...");
         try (var task = compiler().compile(file)) {
             for (var errs : new ErrorProvider(task).errors())
                 client.publishDiagnostics(errs);
-            LOG.info("... done");
+            logger.info("... done");
         } catch (Exception e) {
             // javac can throw AssertionError/IllegalStateException on malformed code
             // (e.g. erroneous nodes in catch clauses) — degrade gracefully, do not propagate
-            LOG.warning("singleLint failed for " + file + " (likely syntax error in source): " + e.getMessage());
+            logger.warning("singleLint failed for " + file + " (likely syntax error in source): " + e.getMessage());
         }
     }
 
@@ -94,7 +95,7 @@ public class JavaLanguageServer extends LanguageServer {
         // If classpath is specified by the user, don't infer anything
         if (!classPath.isEmpty()) {
             javaEndProgress();
-            return new JavaCompilerService(classPath, docPath(), addExports);
+            return new JavaCompilerService(classPath, docPath(), addExports, logger);
         }
         // Otherwise, combine inference with user-specified external dependencies
         else {
@@ -107,7 +108,7 @@ public class JavaLanguageServer extends LanguageServer {
             var docPath = infer.buildDocPath();
 
             javaEndProgress();
-            return new JavaCompilerService(classPath, docPath, addExports);
+            return new JavaCompilerService(classPath, docPath, addExports, logger);
         }
     }
 
@@ -209,14 +210,23 @@ public class JavaLanguageServer extends LanguageServer {
     public void shutdown() {
     }
 
+
+    public final Logger logger = Logger.getLogger("main");
+
     public JavaLanguageServer(LanguageClient client) {
+        this(client, false);
+    }
+
+    public JavaLanguageServer(LanguageClient client, boolean silent) {
         this.client = client;
+        if (silent)
+            logger.setLevel(Level.OFF);
     }
 
     @Override
     public void didChangeConfiguration(DidChangeConfigurationParams change) {
         var java = change.settings.getAsJsonObject().get("java");
-        LOG.info("Received java settings " + java);
+        logger.info("Received java settings " + java);
         settings = java.getAsJsonObject();
     }
 
@@ -232,7 +242,7 @@ public class JavaLanguageServer extends LanguageServer {
                 return Optional.empty();
             return Optional.of(list);
         } catch (Exception e) {
-            LOG.warning("completion failed for " + file + " (likely syntax error): " + e.getMessage());
+            logger.warning("completion failed for " + file + " (likely syntax error): " + e.getMessage());
             return Optional.empty();
         }
     }
@@ -258,7 +268,7 @@ public class JavaLanguageServer extends LanguageServer {
             // TODO add range
             return Optional.of(new Hover(list));
         } catch (Exception e) {
-            LOG.warning("hover failed for " + file + " (likely syntax error): " + e.getMessage());
+            logger.warning("hover failed for " + file + " (likely syntax error): " + e.getMessage());
             return Optional.empty();
         }
     }
@@ -276,7 +286,7 @@ public class JavaLanguageServer extends LanguageServer {
                 return Optional.empty();
             return Optional.of(help);
         } catch (Exception e) {
-            LOG.warning("signatureHelp failed for " + file + " (likely syntax error): " + e.getMessage());
+            logger.warning("signatureHelp failed for " + file + " (likely syntax error): " + e.getMessage());
             return Optional.empty();
         }
     }
@@ -320,7 +330,7 @@ public class JavaLanguageServer extends LanguageServer {
                 return provider.codeActionForDiagnostics(params);
             }
         } catch (Exception e) {
-            LOG.warning("codeAction failed (likely syntax error): " + e.getMessage());
+            logger.warning("codeAction failed (likely syntax error): " + e.getMessage());
             return List.of();
         }
     }
@@ -341,6 +351,4 @@ public class JavaLanguageServer extends LanguageServer {
             // lint(List.of(lastEdited));
         }
     }
-
-    private static final Logger LOG = Logger.getLogger("main");
 }
